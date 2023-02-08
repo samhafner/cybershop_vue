@@ -15,7 +15,11 @@ onBeforeMount(() => {
 
     <div class="max-w-md mx-auto border border-gray-300 px-6 py-10 rounded-lg my-10">
 
-        <h1 class="text-3xl font-bold mb-8"><i class="bi bi-patch-check" aria-hidden="true"></i> You have successfully registered.</h1>
+        <h1 class="text-3xl font-bold mb-8 flex flex-col text-center">
+            <i class="bi bi-patch-check" aria-hidden="true"></i>
+            <span>You have successfully registered</span>
+        
+        </h1>
 
         <div class="space-y-4">
             <p>
