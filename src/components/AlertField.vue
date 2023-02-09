@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { AlertType } from '../interfaces';
 
 const props = defineProps<{
     message: string,
-    type: 'info' | 'success' | 'warning' | 'error'
+    type: AlertType
 }>()
 
 

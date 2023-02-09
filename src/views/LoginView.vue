@@ -1,37 +1,53 @@
-<script setup lang="ts">import { computed, ref, watch } from 'vue';
-import AlertField from '../components/AlertField.vue';
+<script setup lang="ts">
+import { computed, ref, watch } from 'vue';
 import { useUserStore } from '../stores/user.store';
 import { useRouter } from 'vue-router';
+import { useVuelidate } from '@vuelidate/core'
+import { required } from '@vuelidate/validators'
+
 import Button from '../components/Button.vue';
+import AlertField from '../components/AlertField.vue';
 import InputFieldText from '../components/InputFieldText.vue';
 import InputFieldPassword from '../components/InputFieldPassword.vue';
 
 const router = useRouter()
-const username = ref('')
-const password = ref('')
-const alertPassword = ref('')
-const alertUsername = ref('')
-const alertLogin = ref('')
-const passwordVisibility = ref(false)
-const passwordInputMode = computed(() => {
-    if (passwordVisibility.value) {
-        return 'text'
-    } else {
-        return 'password'
-    }
-})
+
 const rememberMe = ref(false)
 const userStore = useUserStore()
 const loading = ref(false)
 
-function changeVisibility() {
-    passwordVisibility.value = !passwordVisibility.value;
-}
+const username = ref('')
+const password = ref('')
+const rules = computed(() => ({
+    username: { required },
+    password: { required }
+}))
+const v$ = useVuelidate(rules, { username, password })
+const alertPassword = ref('')
+const alertUsername = ref('')
+const alertLogin = ref('')
+
+watch(username, async () => {
+    await v$.value.username.$validate()
+    if (v$.value.username.$error && v$.value.username.$errors[0]) {
+        alertUsername.value = v$.value.username.$errors[0].$message.toString()
+    } else {
+        alertUsername.value = ''
+    }
+})
+watch(password, async () => {
+    await v$.value.password.$validate()
+    if (v$.value.password.$error && v$.value.password.$errors[0]) {
+        alertPassword.value = v$.value.password.$errors[0].$message.toString()
+    } else {
+        alertPassword.value = ''
+    }
+})
 
 async function handleLogin() {
-    formValidation()
+    const valid = await v$.value.$validate()
 
-    if (!formValidation()) {
+    if (!valid) {
         return
     }
 
@@ -42,37 +58,16 @@ async function handleLogin() {
     loading.value = false
 
     if (loginResult.success) {
-        router.push('/profile')
-    }
-
-    if (!loginResult.success) {
-
+        router.push({ name: 'profile' })
+    } else {
         if (loginResult.status === 401) {
             alertLogin.value = 'Invalid username or password'
         } else if (loginResult.status === 500) {
             alertLogin.value = 'Couldn\'t login: Server error'
         } else {
-            alertLogin.value = 'Couldn\'t login: Unknown error'
+            alertLogin.value = 'Couldn\'t login: Unknown error. Please try again later.'
         }
     }
-}
-
-function formValidation() {
-    let isValid = true
-    if (username.value === '') {
-        alertUsername.value = 'This field is required'
-        isValid = false
-    } else {
-        alertUsername.value = ''
-    }
-    if (password.value === '') {
-        alertPassword.value = 'This field is required'
-        isValid = false
-    } else {
-        alertPassword.value = ''
-    }
-
-    return isValid
 }
 
 </script>
@@ -83,7 +78,8 @@ function formValidation() {
 
         <h1 class="text-3xl font-bold mb-8">Login</h1>
 
-        <p class="mb-4">New here? <RouterLink to="/signup" class="font-bold text-blue-600">Register now.</RouterLink></p>
+        <p class="mb-4">New here? <RouterLink to="/signup" class="font-bold text-blue-600">Register now.</RouterLink>
+        </p>
 
         <form @submit.prevent="handleLogin" class="space-y-4">
             <div>
