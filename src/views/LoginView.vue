@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useUserStore } from '../stores/user.store';
 import { useRouter } from 'vue-router';
 import { useVuelidate } from '@vuelidate/core'
-import { required, email } from '@vuelidate/validators'
+import { required } from '@vuelidate/validators'
 
 import Button from '../components/Button.vue';
 import AlertField from '../components/AlertField.vue';
@@ -29,15 +29,15 @@ const alertLogin = ref('')
 
 watch(username, async () => {
     await v$.value.username.$validate()
-    if (v$.value.username.$error) {
-        alertUsername.value = (v$.value.username.$errors[0].$message || '').toString()
+    if (v$.value.username.$error && v$.value.username.$errors[0]) {
+        alertUsername.value = v$.value.username.$errors[0].$message.toString()
     } else {
         alertUsername.value = ''
     }
 })
 watch(password, async () => {
     await v$.value.password.$validate()
-    if (v$.value.password.$error) {
+    if (v$.value.password.$error && v$.value.password.$errors[0]) {
         alertPassword.value = v$.value.password.$errors[0].$message.toString()
     } else {
         alertPassword.value = ''

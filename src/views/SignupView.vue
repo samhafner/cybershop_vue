@@ -1,136 +1,146 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Button from '../components/Button.vue';
 import InputFieldText from '../components/InputFieldText.vue';
 import InputFieldPassword from '../components/InputFieldPassword.vue';
 import AlertField from '../components/AlertField.vue';
+import { useRouter } from 'vue-router';
 import { validate } from 'email-validator';
 import { useUserStore } from '../stores/user.store';
 import { useDebounceFn } from '@vueuse/core'
 import PasswordStrength from '../components/PasswordStrength.vue';
-import { useRouter } from 'vue-router';
+import { useVuelidate } from '@vuelidate/core'
+import { required, email, sameAs, helpers, minLength, maxLength } from '@vuelidate/validators'
+import { AlertType } from '../interfaces'
 
-const router = useRouter()
-
-const passwordStrength = ref(0)
 const userStore = useUserStore()
-
-const firstName = ref('')
-const lastName = ref('')
-const password = ref('')
-const passwordRepeat = ref('')
-const email = ref('')
-const fields = [firstName, lastName, password, passwordRepeat, email]
-
-const alertFirstName = ref('')
-const alertLastName = ref('')
-const alertPassword = ref('')
-const alertPasswordRepeat = ref('')
-const alertEmail = ref('')
-const alerts = [alertFirstName, alertLastName, alertPassword, alertPasswordRepeat, alertEmail]
-const alertSignup = ref('')
-
-const loading = ref(false)
 
 const MIN_PASSWORD_LENGTH = 6
 const MAX_PASSWORD_LENGTH = 40
 const REC_PASSWORD_LENGTH = 10
+const passwordHint = `Strong passwords contain more than ${REC_PASSWORD_LENGTH} characters, have numbers and uppercase letters, and contain special characters like !@#$%`
 
-const passwordHint = `Strong passwords contain more than ${REC_PASSWORD_LENGTH} characters, have numbers and uppercase letters, and contain special characters.`
+const passwordStrength = ref(0)
+const router = useRouter()
 
+const firstName = ref('')
+const lastName = ref('')
+const password = ref('')
+const passwordConfirm = ref('')
+const userEmail = ref('')
+// Vuelidate rules
+const rules = computed(() => ({
+    firstName: { required: helpers.withMessage('This field is required', required) },
+    lastName: { required: helpers.withMessage('This field is required', required) },
+    userEmail: {
+        required: helpers.withMessage('This field is required', required),
+        email
+    },
+    password: {
+        required: helpers.withMessage('This field is required', required),
+        minLength: helpers.withMessage(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`, minLength(MIN_PASSWORD_LENGTH)),
+        maxLength: helpers.withMessage(`Password must be less than ${MAX_PASSWORD_LENGTH} characters`, maxLength(MAX_PASSWORD_LENGTH)),
+        hasUpper: helpers.withMessage('Password must contain at least one uppercase letter', (value: string) => /[A-Z]/.test(value)),
+        hasNumber: helpers.withMessage('Password must contain at least one number', (value: string) => /[0-9]/.test(value)),
+        hasSpecialChar: helpers.withMessage('Password must contain at least one special character like !@#$%', (value: string) => !(/[^a-zA-Z0-9]/).test(value)), // test if the string contains any characters that are not letters or numbers
+    },
+    passwordConfirm: {
+        required: helpers.withMessage('This field is required', required),
+        sameAsPassword: helpers.withMessage('Passwords do not match', sameAs(password)),
+    },
+}))
+const v$ = useVuelidate(rules, { firstName, lastName, userEmail, password, passwordConfirm })
 
-watch(email, async (newEmail) => {
-    if (validate(newEmail)) {
-        alertEmail.value = ''
-        useDebounceisEmailAvailable(newEmail)
+const alertFirstName = ref('')
+const alertLastName = ref('')
+const alertPassword = ref('')
+const alertPasswordConfirm = ref('')
+const alertEmail = ref('')
+const alertEmailAvailable = ref({
+    msg: '',
+    type: '' as AlertType
+})
+const alertSignup = ref('')
+
+// for loading spinner on submit
+const loading = ref(false)
+
+// Watchers for instat validation messages
+watch(firstName, async () => {
+    await v$.value.firstName.$validate()
+    if (v$.value.firstName.$error) {
+        alertFirstName.value = v$.value.firstName.$errors[0].$message.toString()
     } else {
-        alertEmail.value = 'Invalid email'
+        alertFirstName.value = ''
+    }
+})
+watch(lastName, async () => {
+    await v$.value.lastName.$validate()
+    if (v$.value.lastName.$error && v$.value.lastName.$errors[0]) {
+        alertLastName.value = v$.value.lastName.$errors[0].$message.toString()
+    } else {
+        alertLastName.value = ''
+    }
+})
+watch(userEmail, async () => {
+    await v$.value.userEmail.$validate()
+    if (v$.value.userEmail.$error && v$.value.userEmail.$errors[0]) {
+        alertEmail.value = v$.value.userEmail.$errors[0].$message.toString()
+    } else {
+        alertEmail.value = ''
+    }
+    // Check if email is available
+    if (v$.value.userEmail.email.$invalid === false && v$.value.userEmail.required.$invalid === false) {
+        const isAvailable = await isEmailAvailableDebounced(userEmail.value)
+        if (isAvailable) {
+            alertEmailAvailable.value = {
+                msg: 'Email available',
+                type: 'success'
+            }
+        } else if (isAvailable === false) {
+            alertEmailAvailable.value = {
+                msg: 'This email is already in use',
+                type: 'error'
+            }
+        } else {
+            alertEmailAvailable.value = {
+                msg: 'Cannot check if email is available',
+                type: 'info'
+            }
+        }
+    } else {
+        alertEmailAvailable.value = {
+            msg: '',
+            type: '' as AlertType
+        }
+    }
+})
+watch(password, async () => {
+    await v$.value.password.$validate()
+    if (v$.value.password.$error && v$.value.password.$errors[0]) {
+        alertPassword.value = v$.value.password.$errors[0].$message.toString()
+    } else {
+        alertPassword.value = ''
+    }
+    // Assess and show password strength
+    if (password.value !== '') {
+        passwordStrength.value = assessPasswordStrength(password.value)
+    }
+})
+watch(passwordConfirm, async () => {
+    await v$.value.passwordConfirm.$validate()
+    if (v$.value.passwordConfirm.$error && v$.value.passwordConfirm.$errors[0]) {
+        alertPasswordConfirm.value = v$.value.passwordConfirm.$errors[0].$message.toString()
+    } else {
+        alertPasswordConfirm.value = ''
     }
 })
 
-const useDebounceisEmailAvailable = useDebounceFn(isEmailAvailable, 500)
+// Debounced function to check if email is available
+const isEmailAvailableDebounced = useDebounceFn(isEmailAvailable, 300)
 async function isEmailAvailable(email: string) {
     const isAvailable = (await userStore.checkEmail(email)).available
-    if (isAvailable === false) {
-        alertEmail.value = 'Email is already in use'
-        return false
-    } else {
-        return true
-    }
-}
-
-watch(fields, () => {
-    for (let i = 0; i < fields.length; i++) {
-        if (fields[i].value !== '' && alerts[i].value === 'This field is required') {
-            alerts[i].value = ''
-            console.log(fields[i].value, alerts[i].value);
-        }
-    }
-})
-
-async function formValidation() {
-    let isValid = true;
-
-    for (let i = 0; i < fields.length; i++) {
-        if (fields[i].value === '') {
-            alerts[i].value = 'This field is required';
-            isValid = false;
-        }
-    }
-
-    if (password.value !== passwordRepeat.value) {
-        console.log(password.value, passwordRepeat.value, 'passwords do not match');
-        alertPasswordRepeat.value = 'Passwords do not match'
-        isValid = false
-    } else {
-        alertPasswordRepeat.value = ''
-    }
-
-    if (!await isEmailAvailable(email.value)) {
-        alertEmail.value = 'Email is already in use'
-        isValid = false
-    }
-
-    if (checkPassword(password.value) === false) {
-        console.log('password is not valid');
-        
-        isValid = false
-    }
-
-    return isValid
-}
-
-watch(password, () => {
-    if (password.value !== '') {
-        checkPassword(password.value)
-        passwordStrength.value = assessPasswordStrength(password.value)
-    } else {
-        alertPassword.value = ''
-    }
-})
-
-function checkPassword(password: string) {
-    let requirementsMet = true
-    if (password.length < MIN_PASSWORD_LENGTH) {
-        alertPassword.value = `Password must be at least ${MIN_PASSWORD_LENGTH} characters`
-        requirementsMet = false
-    } else if (password.length > MAX_PASSWORD_LENGTH) {
-        alertPassword.value = `Password must be less than ${MAX_PASSWORD_LENGTH} characters`
-        requirementsMet = false
-    } else if (!(/[A-Z]/).test(password)) {
-        alertPassword.value = 'Password must contain at least one uppercase letter'
-        requirementsMet = false
-    } else if (!(/[0-9]/).test(password)) {
-        alertPassword.value = 'Password must contain at least one number'
-        requirementsMet = false
-    } else if (!(/[^a-zA-Z0-9]/).test(password)) {
-        alertPassword.value = 'Password must contain at least one special character like !@#$%'
-        requirementsMet = false
-    } else {
-        alertPassword.value = ''
-    }
-
-    return requirementsMet
+    return isAvailable
 }
 
 function assessPasswordStrength(password: string) {
@@ -143,8 +153,7 @@ function assessPasswordStrength(password: string) {
         if ((/[A-Z]/).test(password) && (/[0-9]/).test(password)) {
             strenght++
         }
-
-        // test if there are special characters (i.e. not letters or numbers)
+        // test if there are special characters (here we test if there are any characters that are NOT letters or numbers)
         if ((/[^a-zA-Z0-9]/).test(password)) {
             strenght++
         }
@@ -154,21 +163,27 @@ function assessPasswordStrength(password: string) {
 }
 
 async function handleSignup() {
-    if (await formValidation() === true) {
-        loading.value = true
-        const r = await userStore.signup({ firstname: firstName.value, lastname: lastName.value, email: email.value, password: password.value })
-        if (r.success === true) {
-            alertSignup.value = ''
-            loading.value = false
-            sessionStorage.setItem('signup-email', email.value)
-            router.push({ name: 'signup-success'})
-        } else {
-            alertSignup.value = 'Something went wrong. Please try again.'
-            loading.value = false
-        }
-    } else {
-        console.log('form is not valid');
+    loading.value = true
+    alertSignup.value = ''
+    const valid = await v$.value.$validate()
+
+    if (!valid) {
+        console.log('Form is not valid');
+        alertSignup.value = 'There are errors in the form. Please check the fields.'
+        loading.value = false
+        return
     }
+
+    const r = await userStore.signup({ firstname: firstName.value, lastname: lastName.value, email: userEmail.value, password: password.value })
+    if (r.success === true) {
+        alertSignup.value = ''
+        sessionStorage.setItem('signup-email', userEmail.value)
+        router.push({ name: 'signup-success' })
+    } else {
+        alertSignup.value = 'Something went wrong. Please try again.'
+    }
+    
+    loading.value = false
 }
 
 </script>
@@ -179,7 +194,8 @@ async function handleSignup() {
 
         <h1 class="text-3xl font-bold mb-8">Register</h1>
 
-        <p class="mb-4">Already registered? <RouterLink to="/login" class="font-bold text-blue-600">Login here.
+        <p class="mb-4">Already registered? <RouterLink :to="{ name: 'login' }" class="font-bold text-blue-600">Login
+                here.
             </RouterLink>
         </p>
 
@@ -197,9 +213,13 @@ async function handleSignup() {
                 </Transition>
             </div>
             <div>
-                <InputFieldText v-model="email" :alertText="alertEmail" label="Email" />
+                <InputFieldText v-model="userEmail" :alertText="alertEmail" label="Email" />
                 <Transition name="toggle">
                     <AlertField v-if="alertEmail" :message="alertEmail" type="error" class="text-xs" />
+                </Transition>
+                <Transition name="toggle">
+                    <AlertField v-if="alertEmailAvailable.msg" :message="alertEmailAvailable.msg"
+                        :type="alertEmailAvailable.type" class="text-xs" />
                 </Transition>
             </div>
             <div>
@@ -213,10 +233,10 @@ async function handleSignup() {
                 </Transition>
             </div>
             <div>
-                <InputFieldPassword v-model.lazy="passwordRepeat" :alertText="alertPasswordRepeat"
+                <InputFieldPassword v-model.lazy="passwordConfirm" :alertText="alertPasswordConfirm"
                     label="Repeat password" />
                 <Transition name="toggle">
-                    <AlertField v-if="alertPasswordRepeat" :message="alertPasswordRepeat" type="error"
+                    <AlertField v-if="alertPasswordConfirm" :message="alertPasswordConfirm" type="error"
                         class="text-xs" />
                 </Transition>
             </div>
