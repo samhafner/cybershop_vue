@@ -32,8 +32,10 @@ const isTrue = ref(false);
     <aside class="h-fit rounded-lg border px-6 py-4 space-y-3 w-[200px] shrink-0">
         <div class="flex gap-2 items-center">
             <h2 class="font-bold text-lg">Filter</h2>
-            <Button v-if="activeBrand || activeTag" text="Reset" @click="activeBrand = ''; activeTag = ''"
-                class="text-xs px-2 py-1" />
+            <Transition>
+                <Button v-if="activeBrand || activeTag" text="Reset" @click="activeBrand = ''; activeTag = ''"
+                    class="text-xs px-2 py-1" />
+            </Transition>
         </div>
         <div>
             <h2 class="font-semibold mb-1">Categories</h2>
@@ -60,5 +62,13 @@ const isTrue = ref(false);
 </template>
 
 <style scoped>
+.v-enter-active,
+.v-leave-active {
+    transition: opacity 0.5s ease;
+}
 
+.v-enter-from,
+.v-leave-to {
+    opacity: 0;
+}
 </style>
