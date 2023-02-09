@@ -10,6 +10,13 @@ import ProductView from '../views/ProductView.vue'
 import SuccessSignupView from '../views/SuccessSignupView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import ProductDetailsView from '../views/ProductDetailsView.vue'
+import ShoppingCartView from '../views/ShoppingCartView.vue'
+import CheckoutViewVue from '../views/CheckoutView.vue'
+import ShippingView from '../views/CheckoutView/ShippingView.vue'
+import PaymentView from '../views/CheckoutView/PaymentView.vue'
+import CheckoutReview from '../views/CheckoutView/CheckoutReview.vue'
+import CheckoutSuccess from '../views/CheckoutView/CheckoutSuccess.vue'
+
 
 
 
@@ -29,6 +36,16 @@ const routes = [
             }
         }
     },
+    { name: 'shopping-cart', path: '/shopping-cart', component: ShoppingCartView, meta: { requiresAuth: true } },
+    {
+        name: 'checkout', path: '/checkout', component: CheckoutViewVue, meta: { requiresAuth: true },
+        children: [
+            { name: 'shipping', path: 'shipping', component: ShippingView, meta: { requiresAuth: true } },
+            { name: 'payment', path: 'payment', component: PaymentView, meta: { requiresAuth: true } },
+            { name: 'review', path: 'review', component: CheckoutReview, meta: { requiresAuth: true } },
+            { name: 'success', path: 'success', component: CheckoutSuccess, meta: { requiresAuth: true } },
+        ]
+    },
     { path: '/:pathMatch(.*)*', component: NotFoundView }
 ]
 
@@ -45,7 +62,6 @@ const router = createRouter({
 })
 
 router.beforeEach((to: RouteLocationNormalized) => {
-
     const userStore = useUserStore();
     if (to.meta.requiresAuth && !userStore.isLoggedIn) {
         return { name: 'login' }

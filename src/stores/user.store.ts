@@ -3,15 +3,17 @@ import { useNetworkRequest } from '../composables/network';
 import { Profile, SignupData } from '../interfaces';
 import { useStorage } from '@vueuse/core'
 import axios from 'axios';
+import { useCartStore } from './cart.store';
 
 export const useUserStore = defineStore('user', {
     state: () => ({
         access_token: '',
-        profile: <Profile | null>null
+        profile: <Profile | null>null,
+        loggedIn: false
     }),
     getters: {
         isLoggedIn(): boolean {
-            return this.access_token !== '';
+            return this.loggedIn
         }
     },
     actions: {
@@ -36,13 +38,17 @@ export const useUserStore = defineStore('user', {
 
             this.access_token = response.data.access_token;
             this.setAuthHeader();
-
+            this.loggedIn = true;
+            // load the cart on login
+            // const cartStore = useCartStore();
+            // cartStore.getCart();
             return { success: true, status: response.status };
         },
         async logout() {
             this.access_token = '';
             this.profile = null;
             useStorage('access-token', '').value = '';
+            this.loggedIn = false;
         },
         async getProfile() {
             const response = await useNetworkRequest({
