@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useUserStore } from '../stores/user.store';
+import { useDebounceFn } from '@vueuse/core'
+import { useVuelidate } from '@vuelidate/core'
+import { required, email, sameAs, helpers, minLength, maxLength } from '@vuelidate/validators'
+import { AlertType } from '../interfaces'
+
 import Button from '../components/Button.vue';
 import InputFieldText from '../components/InputFieldText.vue';
 import InputFieldPassword from '../components/InputFieldPassword.vue';
 import AlertField from '../components/AlertField.vue';
-import { useRouter } from 'vue-router';
-import { validate } from 'email-validator';
-import { useUserStore } from '../stores/user.store';
-import { useDebounceFn } from '@vueuse/core'
 import PasswordStrength from '../components/PasswordStrength.vue';
-import { useVuelidate } from '@vuelidate/core'
-import { required, email, sameAs, helpers, minLength, maxLength } from '@vuelidate/validators'
-import { AlertType } from '../interfaces'
 
 const userStore = useUserStore()
 
@@ -182,7 +182,7 @@ async function handleSignup() {
     } else {
         alertSignup.value = 'Something went wrong. Please try again.'
     }
-    
+
     loading.value = false
 }
 
