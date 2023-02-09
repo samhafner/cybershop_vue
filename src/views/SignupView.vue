@@ -42,7 +42,7 @@ const rules = computed(() => ({
         maxLength: helpers.withMessage(`Password must be less than ${MAX_PASSWORD_LENGTH} characters`, maxLength(MAX_PASSWORD_LENGTH)),
         hasUpper: helpers.withMessage('Password must contain at least one uppercase letter', (value: string) => /[A-Z]/.test(value)),
         hasNumber: helpers.withMessage('Password must contain at least one number', (value: string) => /[0-9]/.test(value)),
-        hasSpecialChar: helpers.withMessage('Password must contain at least one special character like !@#$%', (value: string) => !(/[^a-zA-Z0-9]/).test(value)), // test if the string contains any characters that are not letters or numbers
+        hasSpecialChar: helpers.withMessage('Password must contain at least one special character like !@#$%', (value: string) => (/[^a-zA-Z0-9]/).test(value)), // test if the string contains any characters that are not letters or numbers
     },
     passwordConfirm: {
         required: helpers.withMessage('This field is required', required),
