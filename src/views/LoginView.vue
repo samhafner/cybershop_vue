@@ -27,7 +27,7 @@ const alertPassword = ref('')
 const alertUsername = ref('')
 const alertLogin = ref('')
 
-watch(username, async () => {
+watch([() => v$.value.username.$error, username], async () => {
     await v$.value.username.$validate()
     if (v$.value.username.$error && v$.value.username.$errors[0]) {
         alertUsername.value = v$.value.username.$errors[0].$message.toString()
@@ -35,7 +35,7 @@ watch(username, async () => {
         alertUsername.value = ''
     }
 })
-watch(password, async () => {
+watch([() => v$.value.password.$error, password], async () => {
     await v$.value.password.$validate()
     if (v$.value.password.$error && v$.value.password.$errors[0]) {
         alertPassword.value = v$.value.password.$errors[0].$message.toString()
@@ -45,29 +45,39 @@ watch(password, async () => {
 })
 
 async function handleLogin() {
-    const valid = await v$.value.$validate()
+    alertLogin
 
-    if (!valid) {
-        return
-    }
+    let valid: boolean = false
 
-    loading.value = true
-
-    const loginResult = await userStore.login(username.value, password.value, rememberMe.value);
-
-    loading.value = false
-
-    if (loginResult.success) {
-        router.push({ name: 'profile' })
-    } else {
-        if (loginResult.status === 401) {
-            alertLogin.value = 'Invalid username or password'
-        } else if (loginResult.status === 500) {
-            alertLogin.value = 'Couldn\'t login: Server error'
-        } else {
-            alertLogin.value = 'Couldn\'t login: Unknown error. Please try again later.'
+    Promise.allSettled([
+        v$.value.username.$validate(),
+        v$.value.password.$validate()
+    ]).then(async () => {
+        valid = await v$.value.$validate()
+        
+        if (!valid) {
+            return
         }
-    }
+
+        loading.value = true
+        const loginResult = await userStore.login(username.value, password.value, rememberMe.value);
+
+        loading.value = false
+
+        if (loginResult.success) {
+            router.push({ name: 'profile' })
+        } else {
+            if (loginResult.status === 401) {
+                alertLogin.value = 'Invalid username or password'
+            } else if (loginResult.status === 500) {
+                alertLogin.value = 'Couldn\'t login: Server error'
+            } else {
+                alertLogin.value = 'Couldn\'t login: Unknown error. Please try again later.'
+            }
+        }
+    })
+
+
 }
 
 </script>

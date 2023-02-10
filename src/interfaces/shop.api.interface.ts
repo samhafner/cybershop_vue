@@ -31,3 +31,15 @@ export interface FilterParams {
     tag?: string;
     q?: string;
 }
+
+export interface CartItem extends Product {
+    count: number;
+    price: number;
+}
+
+export interface ShoppingCart {
+    items: CartItem[];
+    distinctItems: number;
+    tax: number;
+    total: number;
+}
