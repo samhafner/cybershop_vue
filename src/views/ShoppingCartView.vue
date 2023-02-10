@@ -23,7 +23,7 @@ onBeforeMount(async () => {
 
                 <ShoppingCart v-if="cartStore.cart?.items" :cart="cartStore.cart.items" />
             </div>
-            <div class="bg-gray-100 p-6 flex flex-col gap-2 md:w-[280px] md:sticky md:top-20">
+            <div class="bg-gray-100 p-6 flex flex-col gap-2 md:w-[280px] md:sticky md:top-20 h-fit">
                 <h2 class="font-semibold uppercase mb-6">Overview</h2>
                 <CartOverview />
             </div>
