@@ -3,11 +3,22 @@ import { CartItem } from '../interfaces';
 import { useCartStore } from '../stores/cart.store';
 
 
-defineProps<{
+const props = defineProps<{
     item: CartItem
 }>()
 
 const cartStore = useCartStore();
+
+const increaseCount = () => {
+    cartStore.addToCart(props.item.id)
+}
+
+const decreaseCount = () => {
+    if (props.item.count === 1) {
+        cartStore.decreaseCount(props.item.id)
+    }
+    cartStore.decreaseCount(props.item.id)
+}
 
 </script>
 
@@ -18,13 +29,16 @@ const cartStore = useCartStore();
             <div class="flex flex-col gap-3 justify-between w-full">
                 <p class="font-bold">{{ item.name }}</p>
                 <div class="flex justify-between ">
-                    <div class="flex items-center rounded-lg overflow-hidden border border-gray-300 bg-gray-50 h-min shrink-0">
-                        <button class="bg-gray-200 hover:bg-gray-300 transition-colors border-r border-gray-300 px-0.5">
+                    <div
+                        class="flex items-center rounded-lg overflow-hidden border border-gray-300 bg-gray-50 h-min shrink-0">
+                        <button @click="decreaseCount"
+                            class="bg-gray-200 hover:bg-gray-300 transition-colors border-r border-gray-300 px-0.5">
                             <i class="bi bi-dash" aria-hidden="true"></i>
                             <span class="sr-only">Desccrease count</span>
                         </button>
                         <span class="px-2 text-sm">{{ item.count }}</span>
-                        <button class="bg-gray-200 hover:bg-gray-300 transition-colors border-l border-gray-300 px-0.5">
+                        <button @click="increaseCount"
+                            class="bg-gray-200 hover:bg-gray-300 transition-colors border-l border-gray-300 px-0.5">
                             <i class="bi bi-plus" aria-hidden="true"></i>
                             <span class="sr-only">Increase count</span>
                         </button>

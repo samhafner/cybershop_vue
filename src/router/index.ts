@@ -15,7 +15,7 @@ import CheckoutViewVue from '../views/CheckoutView.vue'
 import ShippingView from '../views/CheckoutView/ShippingView.vue'
 import PaymentView from '../views/CheckoutView/PaymentView.vue'
 import CheckoutReview from '../views/CheckoutView/CheckoutReview.vue'
-import CheckoutSuccess from '../views/CheckoutView/CheckoutSuccess.vue'
+import CheckoutSuccess from '../views/CheckoutSuccess.vue'
 
 
 
@@ -43,9 +43,10 @@ const routes = [
             { name: 'shipping', path: 'shipping', component: ShippingView, meta: { requiresAuth: true } },
             { name: 'payment', path: 'payment', component: PaymentView, meta: { requiresAuth: true } },
             { name: 'review', path: 'review', component: CheckoutReview, meta: { requiresAuth: true } },
-            { name: 'success', path: 'success', component: CheckoutSuccess, meta: { requiresAuth: true } },
+            
         ]
     },
+    { name: 'checkout-success', path: '/purchase', component: CheckoutSuccess, meta: { requiresAuth: true } },
     { path: '/:pathMatch(.*)*', component: NotFoundView }
 ]
 

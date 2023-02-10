@@ -31,10 +31,7 @@ const cartStore = useCartStore();
             <span>Total</span>
             <span>{{ cartStore.cartTotal.toFixed(2) }} €</span>
         </div>
-
-        
-            <Button text="Checkout" class="block mx-auto mt-8" />
-
+            <Button text="Checkout" class="block mx-auto mt-8" @click="$router.push({name: 'shipping'})"/>
         </div>
 
 </template>

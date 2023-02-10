@@ -25,7 +25,7 @@ export const useCartStore = defineStore('cart', {
             return { success: true };
 
         },
-        async addToCart(id: number, count: number) {
+        async addToCart(id: number, count: number = 1) {
             const response = await useNetworkRequest({
                 url: 'http://localhost:3000/shopping-cart/add',
                 method: 'POST',
@@ -49,10 +49,8 @@ export const useCartStore = defineStore('cart', {
             this.getCart();
             return { success: true };
         },
-        async updateCart(id: number, count: number) {
-            if (count === 0) {
-                return await this.removeFromCart(id);
-            }
+        async decreaseCount(id: number, count: number = 1) {
+            // count represent the amount of items remove
             const response = await useNetworkRequest({
                 url: 'http://localhost:3000/shopping-cart/remove',
                 method: 'POST',
