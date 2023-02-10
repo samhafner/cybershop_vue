@@ -60,7 +60,7 @@ function getProduct() {
           <div class="min-h-40 flex w-full flex-col justify-between space-y-4">
             <div class="flex text-3xl">{{ product.price }} <span class="text-base"> €</span></div>
             <p>{{ product.description }}</p>
-            <button @click="cartStore.addToCart(product.id, 1)"
+            <button @click="cartStore.addToCart(product?.id ?? 0, 1)"
               class="mx-auto md:mx-0 w-fit whitespace-nowrap rounded-xl bg-amber-300 hover:bg-amber-400 transition-colors py-0.5 px-3 text-black">
               Add to Cart
             </button>

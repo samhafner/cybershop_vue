@@ -35,7 +35,6 @@ onMounted(() => {
 });
 })
 
-
 watch(() => route.query, (query) => {
     if (query.q) {
         searchQuery.value = query.q as string;
@@ -74,6 +73,25 @@ watch(filterParams, async () => {
     }
 }, { immediate: true });
 
+function searchDetailsString() {
+    let str = `Showing ${products.value?.length} results for `;
+    if (searchQuery.value !== '') {
+        str += `"${searchQuery.value}"`;
+    } else {
+        str += '"All products" ';
+    }
+    if (tagQuery.value && brandQuery.value) {
+        str += `with tag "${tagQuery.value}" and brand "${brandQuery.value}"`;
+    } 
+    if (tagQuery.value && !brandQuery.value) {
+        str += `with tag "${tagQuery.value}"`;
+    }
+    if (!tagQuery.value && brandQuery.value) {
+        str += `with brand "${brandQuery.value}"`;
+    }
+    return str;
+}
+
 </script>
 
 <template>
@@ -90,8 +108,7 @@ watch(filterParams, async () => {
                 :active-tag="tagQuery" @brand="(brand) => brandQuery = brand" @tag="(tag) => tagQuery = tag" />
 
             <div v-if="products" class="space-y-3">
-                <div class="text-sm text-gray-600">Showing {{ products.length }} results for "{{ searchQuery }}".
-                </div>
+                <div class="text-sm text-gray-600">{{ searchDetailsString() }}</div>
 
                 <div class="space-y-3">
                     <ProductCard v-for="product in products" :key="product.id" :product="product" />
