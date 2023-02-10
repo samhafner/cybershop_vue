@@ -43,7 +43,13 @@ const routes = [
             { name: 'shipping', path: 'shipping', component: ShippingView, meta: { requiresAuth: true } },
             { name: 'payment', path: 'payment', component: PaymentView, meta: { requiresAuth: true } },
             { name: 'review', path: 'review', component: CheckoutReview, meta: { requiresAuth: true } },
-            
+            {
+                path: '', redirect: { name: 'shipping' },
+                beforeEnter: (to: RouteLocationNormalized, from: RouteLocationNormalized) => {
+                    
+                 }
+            }
+
         ]
     },
     { name: 'checkout-success', path: '/purchase', component: CheckoutSuccess, meta: { requiresAuth: true } },
