@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import ProductCard from '../components/ProductCard.vue';
 import Searchbar from '../components/Searchbar.vue';
 import { Product } from '../interfaces';
@@ -20,7 +20,8 @@ const filterParams = [searchQuery, tagQuery, brandQuery]
 const tags = ref<string[]>([]);
 const brands = ref<string[]>([]);
 
-Promise.allSettled([productStore.getTags(), productStore.getBrands()]).then((results) => {
+onMounted(() => {
+    Promise.allSettled([productStore.getTags(), productStore.getBrands()]).then((results) => {
     if (results[0].status === 'fulfilled') {
         if (results[0].value.success) {
             tags.value = productStore.tags;
@@ -32,6 +33,8 @@ Promise.allSettled([productStore.getTags(), productStore.getBrands()]).then((res
         }
     }
 });
+})
+
 
 watch(() => route.query, (query) => {
     if (query.q) {

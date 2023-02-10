@@ -66,7 +66,7 @@ const alertSignup = ref('')
 const loading = ref(false)
 
 // Watchers for instat validation messages
-watch(firstName, async () => {
+watch([() => v$.value.firstName.$error, firstName], async () => {
     await v$.value.firstName.$validate()
     if (v$.value.firstName.$error) {
         alertFirstName.value = v$.value.firstName.$errors[0].$message.toString()
@@ -74,7 +74,7 @@ watch(firstName, async () => {
         alertFirstName.value = ''
     }
 })
-watch(lastName, async () => {
+watch([() => v$.value.lastName.$error, lastName], async () => {
     await v$.value.lastName.$validate()
     if (v$.value.lastName.$error && v$.value.lastName.$errors[0]) {
         alertLastName.value = v$.value.lastName.$errors[0].$message.toString()
@@ -82,7 +82,7 @@ watch(lastName, async () => {
         alertLastName.value = ''
     }
 })
-watch(userEmail, async () => {
+watch([() => v$.value.userEmail.$error, userEmail], async () => {
     await v$.value.userEmail.$validate()
     if (v$.value.userEmail.$error && v$.value.userEmail.$errors[0]) {
         alertEmail.value = v$.value.userEmail.$errors[0].$message.toString()
@@ -115,7 +115,7 @@ watch(userEmail, async () => {
         }
     }
 })
-watch(password, async () => {
+watch([() => v$.value.password.$error, password], async () => {
     await v$.value.password.$validate()
     if (v$.value.password.$error && v$.value.password.$errors[0]) {
         alertPassword.value = v$.value.password.$errors[0].$message.toString()
@@ -127,7 +127,7 @@ watch(password, async () => {
         passwordStrength.value = assessPasswordStrength(password.value)
     }
 })
-watch(passwordConfirm, async () => {
+watch([() => v$.value.passwordConfirm.$error, passwordConfirm], async () => {
     await v$.value.passwordConfirm.$validate()
     if (v$.value.passwordConfirm.$error && v$.value.passwordConfirm.$errors[0]) {
         alertPasswordConfirm.value = v$.value.passwordConfirm.$errors[0].$message.toString()
@@ -165,25 +165,37 @@ function assessPasswordStrength(password: string) {
 async function handleSignup() {
     loading.value = true
     alertSignup.value = ''
-    const valid = await v$.value.$validate()
 
-    if (!valid) {
-        console.log('Form is not valid');
-        alertSignup.value = 'There are errors in the form. Please check the fields.'
+    let valid: boolean = false
+
+    Promise.allSettled([
+        v$.value.firstName.$validate(),
+        v$.value.lastName.$validate(),
+        v$.value.userEmail.$validate(),
+        v$.value.password.$validate(),
+        v$.value.passwordConfirm.$validate()
+    ]).then(async () => {
+        valid = await v$.value.$validate()
+
+        if (!valid) {
+            alertSignup.value = 'There are errors in the form. Please check the fields.'
+            loading.value = false
+            return
+        }
+
+        const r = await userStore.signup({ firstname: firstName.value, lastname: lastName.value, email: userEmail.value, password: password.value })
+        if (r.success === true) {
+            alertSignup.value = ''
+            sessionStorage.setItem('signup-email', userEmail.value)
+            router.push({ name: 'signup-success' })
+        } else {
+            alertSignup.value = 'Something went wrong. Please try again.'
+        }
+
         loading.value = false
-        return
-    }
+    })
 
-    const r = await userStore.signup({ firstname: firstName.value, lastname: lastName.value, email: userEmail.value, password: password.value })
-    if (r.success === true) {
-        alertSignup.value = ''
-        sessionStorage.setItem('signup-email', userEmail.value)
-        router.push({ name: 'signup-success' })
-    } else {
-        alertSignup.value = 'Something went wrong. Please try again.'
-    }
 
-    loading.value = false
 }
 
 </script>
