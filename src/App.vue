@@ -25,7 +25,7 @@ watchEffect(() => {
   <header class="sticky top-0 z-30">
     <Navbar />
   </header>
-  <main class="min-h-[calc(100vh-40px-36px+1px)]">
+  <main class="min-h-[calc(100vh-60px-36px)]">
     <RouterView v-slot="{ Component, route }">
       <Transition name="fade">
         <component :is="Component" :key="route.path" />
