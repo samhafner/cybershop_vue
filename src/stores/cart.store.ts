@@ -36,7 +36,7 @@ export const useCartStore = defineStore('cart', {
             })
 
             if (!response || !response?.data || response?.status !== 201) return { success: false };
-            this.getCart();
+            this.cartCount = response.data.distinctItems
             return { success: true };
         },
         async removeFromCart(id: number) {

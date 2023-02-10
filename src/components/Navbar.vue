@@ -16,14 +16,14 @@ const cartStore = useCartStore();
                 <RouterLink to="/products" active-class="underline">Products</RouterLink>
             </nav>
             <div class="flex gap-4 pr-4 md:pl-0 items-center">
-                <RouterLink v-if="!userStore.access_token" to="/login" active-class="underline">Login</RouterLink>
+                <RouterLink v-if="!userStore.loggedIn" to="/login" active-class="underline">Login</RouterLink>
                 <RouterLink v-else to="/logout" active-class="underline" @click="userStore.logout()">Logout</RouterLink>
-                <RouterLink v-if="userStore.isLoggedIn" to="/profile" active-class="underline">
+                <RouterLink v-if="userStore.loggedIn" to="/profile" active-class="underline">
                     <i class="bi bi-person-fill text-xl"></i>
                     <span class="sr-only">Profil</span>
                 </RouterLink>
 
-                <RouterLink v-if="userStore.isLoggedIn" :to="{ name: 'shopping-cart'}">
+                <RouterLink v-if="userStore.loggedIn" :to="{ name: 'shopping-cart'}">
                     <div class="relative">
                         <i class="bi bi-cart3 text-xl"></i>
                         <span id="cart-count"
